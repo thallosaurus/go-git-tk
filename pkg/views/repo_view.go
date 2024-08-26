@@ -109,7 +109,7 @@ func viewIter(b storer.ReferenceIter) string {
 	})
 
 	if sb.Len() == 0 {
-		sb.WriteString(" <empty>\n")
+		sb.WriteString(emptyStyle.Render(" <empty>") + "\n")
 	}
 
 	return sb.String()
@@ -119,7 +119,6 @@ func viewCommitters(c object.CommitIter) string {
 	var sb strings.Builder
 	committers := make(map[string]string)
 	c.ForEach(func(c *object.Commit) error {
-		//sb.WriteString(fmt.Sprintf("%s", c.))
 		committers[c.Author.Name] = c.Author.Email
 		return nil
 	})
@@ -131,7 +130,7 @@ func viewCommitters(c object.CommitIter) string {
 	}
 
 	if i == 0 {
-		sb.WriteString(" <empty>")
+		sb.WriteString(emptyStyle.Render(" <empty>") + "\n")
 	}
 
 	return sb.String()

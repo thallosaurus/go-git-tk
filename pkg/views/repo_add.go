@@ -78,6 +78,10 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// create new repository
 			repoName := n.inputs[0].Value()
 
+			if len(strings.TrimSpace(repoName)) == 0 {
+				return n, nil
+			}
+
 			wd, err := os.Getwd()
 			if err != nil {
 				return n, changeView(errorview{
