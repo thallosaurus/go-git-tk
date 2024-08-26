@@ -1,10 +1,14 @@
-package tuiplayground
+package views
 
 import (
 	"fmt"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+)
+
+var (
+	ssh_base_domain string = "localhost"
+	ssh_user        string = "git"
 )
 
 type climodel struct {
@@ -15,14 +19,6 @@ func NewCliModel() climodel {
 	return climodel{
 		selectedView: nil,
 	}
-}
-
-type TickMsg time.Time
-
-func doTick() tea.Cmd {
-	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		return TickMsg(t)
-	})
 }
 
 func (c climodel) Init() tea.Cmd {
@@ -64,7 +60,7 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch m := msg.(tea.KeyMsg).String(); m {
 		case "ctrl+c":
-			return c, tea.Quit
+			return c, tea.Batch(tea.ClearScreen, tea.Quit)
 		}
 	}
 
@@ -90,11 +86,11 @@ func (c climodel) View() string {
 
 func (c climodel) GetKeymapString() string {
 	var s string
-	s += "ctrl+c - quit"
+	s += "Controls:\nctrl+c - quit"
 
 	if c.selectedView != nil {
 		s += ", "
-		s += c.selectedView.GetKeymapString()
+		s += c.selectedView.GetKeymapString() + "\n"
 	}
 
 	return helpStyle.Render(s)

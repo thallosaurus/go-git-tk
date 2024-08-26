@@ -1,4 +1,4 @@
-package tuiplayground
+package views
 
 import (
 	"fmt"
@@ -76,6 +76,8 @@ func (h hookedit) View() string {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Edit Hooks for Repo %s\n\n", h.repo.GetName()))
+
+	sb.WriteString("Select the hook you wish to edit. If the file doesn't exist it gets created automatically.\n\n")
 
 	i := 0
 	for _, label := range hookLabels() {

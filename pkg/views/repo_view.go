@@ -1,4 +1,4 @@
-package tuiplayground
+package views
 
 import (
 	"fmt"
@@ -16,6 +16,10 @@ type repoview struct {
 	cursor        int
 	cursorTargets map[string]func() tea.Cmd
 	parent        richmodel
+}
+
+type removeRepo struct {
+	path string
 }
 
 func MakeRepoView(p richmodel, repo repo) repoview {
@@ -42,7 +46,14 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "h":
 			return r, changeView(OpenHookEdit(r, r.repo))
+
+		case "d":
+			return r, changeView(ConfirmRepoRemove(r, r.repo))
+
+		case "r":
+			return r, changeView(OpenRepoRename(r, r.repo))
 		}
+
 	}
 	return r, nil
 }
@@ -59,9 +70,10 @@ func (r repoview) View() string {
 	}
 	s += "\n"
 
+	s += fmt.Sprintf("Repo URL: %s@%s:%s\n", ssh_user, ssh_base_domain, r.repo.GetName())
+
 	s += "Branches:"
 	s += viewIter(branches)
-	s += "\n"
 
 	s += "Tags:"
 	tags, err := r.repo.git.Tags()
@@ -69,7 +81,6 @@ func (r repoview) View() string {
 		log.Panic(err)
 	}
 	s += viewIter(tags)
-	s += "\n"
 
 	c, err := r.repo.git.CommitObjects()
 	if err != nil {
@@ -86,7 +97,7 @@ func (r repoview) View() string {
 }
 
 func (r repoview) GetKeymapString() string {
-	return "h - edit hooks, esc - back"
+	return "h - edit hooks, r - rename repo, d - delete repo, esc - back"
 }
 
 func viewIter(b storer.ReferenceIter) string {

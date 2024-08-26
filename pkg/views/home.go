@@ -1,4 +1,4 @@
-package tuiplayground
+package views
 
 import (
 	"fmt"
@@ -30,6 +30,15 @@ func newAction() tea.Cmd {
 	return changeView(NewRepoView(NewHomeView()))
 }
 
+type open_key_mgmt struct{}
+
+func openKeyMgmt() tea.Cmd {
+	return func() tea.Msg {
+		return open_key_mgmt{}
+	}
+
+}
+
 type (
 	updateViewEvent struct{}
 )
@@ -40,25 +49,8 @@ func updateView() tea.Cmd {
 	}
 }
 
-func actions() []Action {
-	var fns []Action
-	fns = append(fns, newAction)
-
-	return fns
-}
-
-func actionsLabels() []string {
-	return []string{
-		"Create New Repository",
-	}
-}
-
 func (h homeview) Init() tea.Cmd {
 	return tea.Batch(tea.ShowCursor, updateView())
-}
-
-func (h homeview) getRowsLength() int {
-	return len(actions()) + len(h.rows)
 }
 
 func openRepo(p richmodel, r repo) tea.Cmd {
@@ -76,22 +68,32 @@ func (h homeview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return h, nil
 
 		case "down":
-			if h.cursor < h.getRowsLength()-1 {
+			if h.cursor < len(h.rows)-1 {
 				h.cursor++
 			}
 			return h, nil
 
-		case "esc":
-			return h, closeView()
-
 		case "enter":
-			if h.cursor < len(actionsLabels()) {
-				a := actions()
-				return h, a[h.cursor]()
-			} else {
-				return h, openRepo(h, h.rows[h.cursor-len(actions())])
-			}
+			return h, openRepo(h, h.rows[h.cursor])
+
+		case "n":
+			return h, newAction()
+
+		case "k":
+			return h, openKeyMgmt()
 		}
+
+	case open_key_mgmt:
+		home := os.Getenv("HOME")
+
+		if err := openEditor(home + "/.ssh/authorized_keys"); err != nil {
+			return h, changeView(errorview{
+				Parent: h,
+				Err:    err,
+			})
+		}
+
+		return h, tea.Batch(tea.ShowCursor, changeView(h))
 
 	case updateViewEvent:
 		wd, err := os.Getwd()
@@ -122,7 +124,6 @@ func (h homeview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		h.rows = r
 		return h, nil
-
 	}
 	return h, nil
 }
@@ -130,28 +131,15 @@ func (h homeview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (h homeview) View() string {
 	var s string
 
-	s += titleStyle.Render("Repository Manager")
-
+	s += titleStyle.Render("Git Server Toolkit")
 	s += "\n\n"
 
-	actionlabels := actionsLabels()
-
-	for i, _ := range actions() {
-		var cur string
-		if h.cursor == i {
-			cur = "*"
-		} else {
-			cur = " "
-		}
-
-		s += actionStyle.Render(fmt.Sprintf("[%s] %s ", cur, actionlabels[i]))
-		s += "\n"
-	}
+	s += titleStyle.Render("Select the repository you want to manage")
 	s += "\n\n"
 
 	for i, r := range h.rows {
 		var cur string
-		if h.cursor == len(actionsLabels())+i {
+		if h.cursor == i {
 			cur = "*"
 		} else {
 			cur = " "
@@ -168,5 +156,5 @@ func (h homeview) View() string {
 }
 
 func (h homeview) GetKeymapString() string {
-	return "enter - select repo, up/down - move, esc - close view (debug)"
+	return "enter - select repo, up/down - move, k - access keys, n - create repository"
 }

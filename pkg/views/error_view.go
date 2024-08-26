@@ -1,4 +1,4 @@
-package tuiplayground
+package views
 
 import tea "github.com/charmbracelet/bubbletea"
 

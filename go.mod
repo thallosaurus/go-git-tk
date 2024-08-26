@@ -1,4 +1,4 @@
-module tuiplayground
+module github.com/thallosaurus/go-git-tk
 
 go 1.22.3
 
