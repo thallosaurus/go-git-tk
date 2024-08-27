@@ -7,11 +7,12 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 type reporemove struct {
 	parent  richmodel
-	repo    repo
+	repo    gitlib.Repo
 	confirm textinput.Model
 }
 
@@ -35,8 +36,8 @@ func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return r, changeView(r.parent)
 
 		case "enter":
-			if r.confirm.Value() == path.Base(r.repo.repopath) {
-				return r, finalRemoveRepo(r.repo.repopath)
+			if r.confirm.Value() == path.Base(r.repo.Repopath) {
+				return r, finalRemoveRepo(r.repo.Repopath)
 			}
 
 		default:
@@ -79,11 +80,11 @@ func (r reporemove) GetKeymapString() string {
 	return "enter - yes, esc - no"
 }
 
-func ConfirmRepoRemove(parent richmodel, repo repo) reporemove {
+func ConfirmRepoRemove(parent richmodel, repo gitlib.Repo) reporemove {
 	t := textinput.New()
 	t.Focus()
 	t.CharLimit = 32
-	t.Placeholder = path.Base(repo.repopath)
+	t.Placeholder = path.Base(repo.Repopath)
 
 	return reporemove{
 		parent:  parent,

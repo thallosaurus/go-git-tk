@@ -5,11 +5,12 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 type homeview struct {
 	cursor int
-	rows   []repo
+	rows   []gitlib.Repo
 }
 
 type richmodel interface {
@@ -22,7 +23,7 @@ type Action func() tea.Cmd
 func NewHomeView() richmodel {
 	return homeview{
 		cursor: 0,
-		rows:   make([]repo, 0),
+		rows:   make([]gitlib.Repo, 0),
 	}
 }
 
@@ -53,7 +54,7 @@ func (h homeview) Init() tea.Cmd {
 	return tea.Batch(tea.ShowCursor, updateView())
 }
 
-func openRepo(p richmodel, r repo) tea.Cmd {
+func openRepo(p richmodel, r gitlib.Repo) tea.Cmd {
 	return changeView(MakeRepoView(p, r))
 }
 
@@ -113,7 +114,7 @@ func (h homeview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		r, err := GetRepos(wd)
+		r, err := gitlib.GetRepos(wd)
 
 		if err != nil {
 			return h, changeView(errorview{

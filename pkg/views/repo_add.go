@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/go-git/go-git/v5"
+	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 type newrepo struct {
@@ -92,22 +92,16 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			path := wd + "/repos/" + sanitize_name(repoName) + ".git"
 
-			r, err := createGitRepo(path)
+			repo, err := gitlib.MakeNewRepo(path)
 
 			if err != nil {
-				//log.Panic(err)
 				return n, changeView(errorview{
-					Err:    err,
 					Parent: n,
+					Err:    err,
 				})
 			}
 
-			repo := repo{
-				git:      r,
-				repopath: path,
-			}
-
-			return n, changeView(MakeRepoView(n.parent, repo))
+			return n, changeView(MakeRepoView(n.parent, *repo))
 
 		default:
 			return n, n.updateInputs(msg)
@@ -142,14 +136,6 @@ func (m newrepo) updateInputs(msg tea.Msg) tea.Cmd {
 
 func sanitize_name(s string) string {
 	return strings.ReplaceAll(s, " ", "-")
-}
-
-func createGitRepo(repoPath string) (*git.Repository, error) {
-	//path := "./repos/" + sanitize_name(repoName)
-
-	return git.PlainInitWithOptions(repoPath, &git.PlainInitOptions{
-		Bare: true,
-	})
 }
 
 func (h newrepo) GetKeymapString() string {

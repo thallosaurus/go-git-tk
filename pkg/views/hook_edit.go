@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 const hookChmod = 0755
@@ -15,7 +16,7 @@ const hookChmod = 0755
 type hookedit struct {
 	parent richmodel
 	cursor int
-	repo   repo
+	repo   gitlib.Repo
 	action []Action
 }
 
@@ -97,27 +98,27 @@ func (h hookedit) View() string {
 	return sb.String()
 }
 
-func OpenHookEdit(parent richmodel, r repo) richmodel {
+func OpenHookEdit(parent richmodel, r gitlib.Repo) richmodel {
 	var a []Action
 
 	a = append(a, func() tea.Cmd {
 		return func() tea.Msg {
 			return openeditor{
-				path: r.repopath + "/hooks/post-receive",
+				path: r.Repopath + "/hooks/post-receive",
 			}
 		}
 	})
 	a = append(a, func() tea.Cmd {
 		return func() tea.Msg {
 			return openeditor{
-				path: r.repopath + "/hooks/pre-receive",
+				path: r.Repopath + "/hooks/pre-receive",
 			}
 		}
 	})
 	a = append(a, func() tea.Cmd {
 		return func() tea.Msg {
 			return openeditor{
-				path: r.repopath + "/hooks/pre-commit",
+				path: r.Repopath + "/hooks/pre-commit",
 			}
 		}
 	})

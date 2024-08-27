@@ -9,11 +9,12 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 type reporename struct {
 	parent richmodel
-	repo   repo
+	repo   gitlib.Repo
 	input  textinput.Model
 }
 
@@ -54,8 +55,8 @@ func (r reporename) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case rename_event:
-		p := path.Dir(r.repo.repopath)
-		err := os.Rename(r.repo.repopath, fmt.Sprintf("%s/%s.git", p, m.name))
+		p := path.Dir(r.repo.Repopath)
+		err := os.Rename(r.repo.Repopath, fmt.Sprintf("%s/%s.git", p, m.name))
 		if err != nil {
 			return r, changeView(errorview{
 				Parent: r,
@@ -70,6 +71,8 @@ func (r reporename) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (rr reporename) View() string {
 	s := "Rename Repository\n\n"
 
+	s += "Don't forget to update the Remote URL!\n\n"
+
 	s += "Name:\n"
 	s += rr.input.View()
 
@@ -80,11 +83,11 @@ func (rr reporename) GetKeymapString() string {
 	return "enter - confirm, esc - back"
 }
 
-func OpenRepoRename(parent richmodel, repo repo) reporename {
+func OpenRepoRename(parent richmodel, repo gitlib.Repo) reporename {
 	input := textinput.New()
 	input.Focus()
 
-	basename := path.Base(repo.repopath)
+	basename := path.Base(repo.Repopath)
 
 	input.SetValue(strings.TrimSuffix(basename, filepath.Ext(basename)))
 

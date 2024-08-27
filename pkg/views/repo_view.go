@@ -3,16 +3,13 @@ package views
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 type repoview struct {
-	repo          repo
+	repo          gitlib.Repo
 	cursor        int
 	cursorTargets map[string]func() tea.Cmd
 	parent        richmodel
@@ -22,7 +19,7 @@ type removeRepo struct {
 	path string
 }
 
-func MakeRepoView(p richmodel, repo repo) repoview {
+func MakeRepoView(p richmodel, repo gitlib.Repo) repoview {
 	targets := make(map[string]func() tea.Cmd, 0)
 
 	return repoview{
@@ -52,6 +49,9 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "r":
 			return r, changeView(OpenRepoRename(r, r.repo))
+
+		case "l":
+			return r, changeView(MakeListTest())
 		}
 
 	}
@@ -64,32 +64,56 @@ func (r repoview) View() string {
 	s += "Manage Repository\n\n"
 
 	s += fmt.Sprintf("Name: %s\n", r.repo.GetName())
-	branches, err := r.repo.git.Branches()
-	if err != nil {
-		log.Panic(err)
-	}
+	s += fmt.Sprintf("Repo URL: %s@%s:%s\n", ssh_user, ssh_base_domain, r.repo.GetName())
 	s += "\n"
 
-	s += fmt.Sprintf("Repo URL: %s@%s:%s\n", ssh_user, ssh_base_domain, r.repo.GetName())
-
-	s += "Branches:"
-	s += viewIter(branches)
-
-	s += "Tags:"
-	tags, err := r.repo.git.Tags()
+	branches, err := r.repo.GetBranches()
 	if err != nil {
 		log.Panic(err)
 	}
-	s += viewIter(tags)
 
-	c, err := r.repo.git.CommitObjects()
+	s += "Branches:"
+	if len(branches) != 0 {
+
+		for _, b := range branches {
+			s += fmt.Sprintf("\n- %s\n", b)
+		}
+	} else {
+		s += emptyStyle.Render(" <empty>") + "\n"
+	}
+	//	s += viewIter(branches)
+
+	s += "Tags:"
+	tags, err := r.repo.GetTags()
+	if err != nil {
+		log.Panic(err)
+	}
+	if len(tags) != 0 {
+
+		for _, t := range tags {
+			s += fmt.Sprintf("\n- %s\n", t)
+		}
+	} else {
+		s += emptyStyle.Render(" <empty>") + "\n"
+	}
+
+	c, err := r.repo.GetCommitters()
 	if err != nil {
 		log.Panic(err)
 	}
 
 	//s += "nl"
 	s += "Committers:"
-	s += viewCommitters(c)
+
+	for _, email := range c {
+		s += fmt.Sprintf("\n - %s", email)
+	}
+
+	if len(c) == 0 {
+		s += emptyStyle.Render(" <empty>") + "\n"
+	} else {
+
+	}
 
 	s += "\n"
 
@@ -98,40 +122,4 @@ func (r repoview) View() string {
 
 func (r repoview) GetKeymapString() string {
 	return "h - edit hooks, r - rename repo, d - delete repo, esc - back"
-}
-
-func viewIter(b storer.ReferenceIter) string {
-	var sb strings.Builder
-	b.ForEach(func(r *plumbing.Reference) error {
-		sb.WriteString(fmt.Sprintf("\n- %s\n", string(r.Name())))
-
-		return nil
-	})
-
-	if sb.Len() == 0 {
-		sb.WriteString(emptyStyle.Render(" <empty>") + "\n")
-	}
-
-	return sb.String()
-}
-
-func viewCommitters(c object.CommitIter) string {
-	var sb strings.Builder
-	committers := make(map[string]string)
-	c.ForEach(func(c *object.Commit) error {
-		committers[c.Author.Name] = c.Author.Email
-		return nil
-	})
-
-	i := 0
-	for author, email := range committers {
-		sb.WriteString(fmt.Sprintf("\n - %s <%s>", author, email))
-		i++
-	}
-
-	if i == 0 {
-		sb.WriteString(emptyStyle.Render(" <empty>") + "\n")
-	}
-
-	return sb.String()
 }
