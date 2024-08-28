@@ -1,21 +1,40 @@
 package views
 
 import (
+	"go-git-tk/pkg/gitlib"
+
 	"os"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
+)
+
+var (
+	newrepo_ok_key key.Binding = key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter/⏎", "create"),
+	)
+	newrepo_cancel_key key.Binding = key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "cancel"),
+	)
+	newrepo_select_textview key.Binding = key.NewBinding(
+		key.WithKeys("up", "prev input"),
+		key.WithKeys("shift+tab"),
+		key.WithKeys("down", "next input"),
+		key.WithKeys("tab"),
+	)
 )
 
 type newrepo struct {
-	parent     richmodel
+	parent     Richmodel
 	focusIndex int
 	inputs     []textinput.Model
 }
 
-func NewRepoView(parent richmodel) newrepo {
+func NewRepoView(parent Richmodel) newrepo {
 	r := newrepo{
 		focusIndex: 0,
 		inputs:     make([]textinput.Model, 1),
@@ -46,11 +65,11 @@ func (n newrepo) Init() tea.Cmd {
 func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		switch m.String() {
-		case "esc":
-			return n, changeView(NewHomeView())
+		switch {
+		case key.Matches(m, newrepo_cancel_key):
+			return n, ChangeView(MakeHomeList())
 
-		case "up", "shift+tab", "down", "tab":
+		case key.Matches(m, newrepo_select_textview):
 			s := m.String()
 
 			if s == "up" || s == "shift+tab" {
@@ -74,7 +93,7 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return n, tea.Batch(cmds...)
 
-		case "enter":
+		case key.Matches(m, newrepo_ok_key):
 			// create new repository
 			repoName := n.inputs[0].Value()
 
@@ -84,7 +103,7 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			wd, err := os.Getwd()
 			if err != nil {
-				return n, changeView(errorview{
+				return n, ChangeView(errorview{
 					Parent: n,
 					Err:    err,
 				})
@@ -95,13 +114,13 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			repo, err := gitlib.MakeNewRepo(path)
 
 			if err != nil {
-				return n, changeView(errorview{
+				return n, ChangeView(errorview{
 					Parent: n,
 					Err:    err,
 				})
 			}
 
-			return n, changeView(MakeRepoView(n.parent, *repo))
+			return n, ChangeView(MakeRepoView(n.parent, *repo))
 
 		default:
 			return n, n.updateInputs(msg)
@@ -138,6 +157,10 @@ func sanitize_name(s string) string {
 	return strings.ReplaceAll(s, " ", "-")
 }
 
-func (h newrepo) GetKeymapString() string {
-	return "enter - create, esc - back"
+func (h newrepo) GetKeymapString() []key.Binding {
+	return []key.Binding{
+		newrepo_ok_key,
+		newrepo_cancel_key,
+		newrepo_select_textview,
+	}
 }

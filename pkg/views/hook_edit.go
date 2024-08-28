@@ -2,19 +2,24 @@ package views
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 
+	"go-git-tk/pkg/gitlib"
+
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
 )
 
 const hookChmod = 0755
 
+type Action func() tea.Cmd
+
 type hookedit struct {
-	parent richmodel
+	parent Richmodel
 	cursor int
 	repo   gitlib.Repo
 	action []Action
@@ -24,6 +29,23 @@ type (
 	openeditor struct {
 		path string
 	}
+)
+
+var (
+	hookedit_cancel key.Binding = key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "cancel"),
+	)
+	hookedit_accept key.Binding = key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "remove repo"),
+	)
+	hookedit_move key.Binding = key.NewBinding(
+		key.WithKeys("up"),
+		key.WithHelp("up", "move up"),
+		key.WithKeys("down"),
+		key.WithHelp("down", "move down"),
+	)
 )
 
 func hookLabels() []string {
@@ -41,12 +63,12 @@ func (h hookedit) Init() tea.Cmd {
 func (h hookedit) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		switch m := m.String(); m {
-		case "esc":
-			return h, changeView(h.parent)
+		switch {
+		case key.Matches(m, hookedit_cancel):
+			return h, ChangeView(h.parent)
 
-		case "up", "down":
-			if m == "up" {
+		case key.Matches(m, hookedit_move):
+			if m.String() == "up" {
 				if h.cursor > 0 {
 					h.cursor--
 				}
@@ -56,19 +78,19 @@ func (h hookedit) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-		case "enter":
+		case key.Matches(m, hookedit_accept):
 			return h, h.action[h.cursor]()
 		}
 
 	case openeditor:
-		if err := openEditor(m.path); err != nil {
-			return h, changeView(errorview{
+		if err := OpenEditor(m.path); err != nil {
+			return h, ChangeView(errorview{
 				Parent: h,
 				Err:    err,
 			})
 		}
 
-		return h, tea.Batch(tea.ShowCursor, changeView(h.parent))
+		return h, tea.Batch(tea.ShowCursor, ChangeView(h.parent))
 	}
 	return h, nil
 }
@@ -98,7 +120,7 @@ func (h hookedit) View() string {
 	return sb.String()
 }
 
-func OpenHookEdit(parent richmodel, r gitlib.Repo) richmodel {
+func OpenHookEdit(parent Richmodel, r gitlib.Repo) Richmodel {
 	var a []Action
 
 	a = append(a, func() tea.Cmd {
@@ -131,7 +153,7 @@ func OpenHookEdit(parent richmodel, r gitlib.Repo) richmodel {
 	}
 }
 
-func openEditor(hook string) error {
+func OpenEditor(hook string) error {
 
 	// setup hooks folder
 	if !pathExists(path.Dir(hook)) {
@@ -169,6 +191,14 @@ func openEditor(hook string) error {
 	}
 }
 
+func SetupRepos(wd string) {
+	if !pathExists(wd + "/repos") {
+		if err := os.Mkdir(wd+"/repos", 0755); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
 func pathExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// path/to/whatever does not exist
@@ -178,6 +208,6 @@ func pathExists(path string) bool {
 	}
 }
 
-func (h hookedit) GetKeymapString() string {
-	return "up/down - select, enter - open editor, esc - back"
+func (h hookedit) GetKeymapString() []key.Binding {
+	return []key.Binding{}
 }

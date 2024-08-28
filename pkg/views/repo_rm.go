@@ -1,17 +1,29 @@
 package views
 
 import (
+	"go-git-tk/pkg/gitlib"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
+)
+
+var (
+	reporm_cancel key.Binding = key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "cancel"),
+	)
+	reporm_accept key.Binding = key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "remove repo"),
+	)
 )
 
 type reporemove struct {
-	parent  richmodel
+	parent  Richmodel
 	repo    gitlib.Repo
 	confirm textinput.Model
 }
@@ -33,7 +45,7 @@ func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch m.String() {
 		case "esc":
-			return r, changeView(r.parent)
+			return r, ChangeView(r.parent)
 
 		case "enter":
 			if r.confirm.Value() == path.Base(r.repo.Repopath) {
@@ -51,12 +63,12 @@ func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		err := os.RemoveAll(m.path)
 
 		if err != nil {
-			return r, changeView(errorview{
+			return r, ChangeView(errorview{
 				Parent: r,
 				Err:    err,
 			})
 		} else {
-			return r, changeView(NewHomeView())
+			return r, ChangeView(MakeHomeList())
 		}
 	}
 
@@ -76,11 +88,14 @@ func (r reporemove) View() string {
 	return sb.String()
 }
 
-func (r reporemove) GetKeymapString() string {
-	return "enter - yes, esc - no"
+func (r reporemove) GetKeymapString() []key.Binding {
+	return []key.Binding{
+		reporm_accept,
+		reporm_cancel,
+	}
 }
 
-func ConfirmRepoRemove(parent richmodel, repo gitlib.Repo) reporemove {
+func ConfirmRepoRemove(parent Richmodel, repo gitlib.Repo) reporemove {
 	t := textinput.New()
 	t.Focus()
 	t.CharLimit = 32

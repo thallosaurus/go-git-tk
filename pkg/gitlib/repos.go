@@ -17,11 +17,14 @@ func MakeNewRepo(path string) (*Repo, error) {
 	if err != nil {
 		return nil, err
 	} else {
-
-		return &Repo{
+		repo := &Repo{
 			git:      r,
 			Repopath: path,
-		}, nil
+		}
+
+		repo.SetDescription(repo.GetName() + " repository")
+
+		return repo, nil
 	}
 }
 
@@ -120,6 +123,10 @@ func (r Repo) GetDescription() (string, error) {
 	}
 
 	return string(f), nil
+}
+
+func (r Repo) SetDescription(desc string) error {
+	return os.WriteFile(r.Repopath+"/description", []byte(desc), 0644)
 }
 
 func GetRepos(root string) ([]Repo, error) {

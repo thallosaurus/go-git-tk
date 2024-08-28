@@ -9,4 +9,5 @@ var (
 	helpStyle      = lipgloss.NewStyle()
 	dangerousStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true)
 	emptyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#808080"))
+	keymapStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#808080"))
 )

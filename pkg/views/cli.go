@@ -3,37 +3,61 @@ package views
 import (
 	"fmt"
 
+	"strings"
+
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 var (
 	ssh_base_domain string = "localhost"
 	ssh_user        string = "git"
+
+	term_width  int = 20
+	term_height int = 14
+
+	cli_quit key.Binding = key.NewBinding(
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "exit"),
+	)
 )
 
 type climodel struct {
-	selectedView richmodel
+	selectedView Richmodel
+	show_keys    bool
+	ready        bool
+}
+
+type Richmodel interface {
+	tea.Model
+	GetKeymapString() []key.Binding
 }
 
 func NewCliModel() climodel {
 	return climodel{
 		selectedView: nil,
+		show_keys:    false,
+		ready:        false,
 	}
+}
+
+func (c *climodel) SetKeyMappingsShown(b bool) {
+	c.show_keys = b
 }
 
 func (c climodel) Init() tea.Cmd {
 	//return nil
-	return changeView(NewHomeView())
+	return ChangeView(MakeHomeList())
 }
 
 type (
 	switchView struct {
-		model richmodel
+		model Richmodel
 	}
 	closeChild struct{}
 )
 
-func changeView(m richmodel) tea.Cmd {
+func ChangeView(m Richmodel) tea.Cmd {
 	return func() tea.Msg {
 		return switchView{
 			model: m,
@@ -49,6 +73,14 @@ func closeView() tea.Cmd {
 
 func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
+	case tea.WindowSizeMsg:
+		term_width = m.Width
+		term_height = m.Height
+
+		if !c.ready {
+			c.ready = true
+		}
+
 	case switchView:
 		c.selectedView = m.model
 		return c, tea.Batch(c.selectedView.Init(), tea.ClearScreen)
@@ -58,8 +90,8 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return c, nil
 
 	case tea.KeyMsg:
-		switch m := msg.(tea.KeyMsg).String(); m {
-		case "ctrl+c":
+		switch {
+		case key.Matches(m, cli_quit):
 			return c, tea.Batch(tea.ClearScreen, tea.Quit)
 		}
 	}
@@ -68,7 +100,7 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if c.selectedView != nil {
 		cc, cmd := c.selectedView.Update(msg)
 
-		c.selectedView = cc.(richmodel)
+		c.selectedView = cc.(Richmodel)
 
 		return c, cmd
 	}
@@ -77,21 +109,42 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (c climodel) View() string {
-	if c.selectedView != nil {
-		return c.selectedView.View() + "\n\n" + c.GetKeymapString()
+	if c.selectedView != nil && c.ready {
+		s := c.selectedView.View()
+		/*if c.show_keys {
+			s += "\n" + c.GetKeymapString()
+		}*/
+
+		km := append(c.GetKeymapString(), c.selectedView.GetKeymapString()...)
+
+		var sb []string
+		for _, val := range km {
+			sb = append(sb, fmt.Sprintf("<%s>: %s", val.Help().Key, val.Help().Desc))
+		}
+
+		quickhelp := keymapStyle.Render(strings.Join(sb, " • "))
+		v := fmt.Sprintf("%s\n%s", s, quickhelp)
+
+		return v
 	} else {
 		return fmt.Sprintf("root view, dbg: %v", c)
 	}
 }
 
-func (c climodel) GetKeymapString() string {
+func (c climodel) GetKeymapString() []key.Binding {
 	var s string
-	s += "Controls:\nctrl+c - quit"
+
+	s += "ctrl+c - quit"
 
 	if c.selectedView != nil {
-		s += ", "
-		s += c.selectedView.GetKeymapString() + "\n"
+		s += " • "
+		//s += c.selectedView.GetKeymapString() + "\n"
 	}
 
-	return helpStyle.Render(s)
+	s = helpStyle.Render(s)
+
+	//return s
+	return []key.Binding{
+		cli_quit,
+	}
 }

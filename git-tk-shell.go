@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"go-git-tk/pkg/views"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/thallosaurus/go-git-tk/pkg/views"
 )
 
 func main() {
 	initialModel := views.NewCliModel()
+	initialModel.SetKeyMappingsShown(false)
 
 	p := tea.NewProgram(initialModel)
 

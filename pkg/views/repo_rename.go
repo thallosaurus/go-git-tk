@@ -2,18 +2,30 @@ package views
 
 import (
 	"fmt"
+	"go-git-tk/pkg/gitlib"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/thallosaurus/go-git-tk/pkg/gitlib"
+)
+
+var (
+	reporename_cancel key.Binding = key.NewBinding(
+		key.WithKeys("esc"),
+		key.WithHelp("esc", "cancel"),
+	)
+	reporename_accept key.Binding = key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "remove repo"),
+	)
 )
 
 type reporename struct {
-	parent richmodel
+	parent Richmodel
 	repo   gitlib.Repo
 	input  textinput.Model
 }
@@ -39,7 +51,7 @@ func (r reporename) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch m.String() {
 		case "esc":
-			return r, changeView(r.parent)
+			return r, ChangeView(r.parent)
 
 		case "enter":
 			//if r.input.Value() == path.Base(r.repo.repopath) {
@@ -56,14 +68,16 @@ func (r reporename) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case rename_event:
 		p := path.Dir(r.repo.Repopath)
-		err := os.Rename(r.repo.Repopath, fmt.Sprintf("%s/%s.git", p, m.name))
+		newPath := fmt.Sprintf("%s/%s.git", p, m.name)
+		err := os.Rename(r.repo.Repopath, newPath)
 		if err != nil {
-			return r, changeView(errorview{
+			return r, ChangeView(errorview{
 				Parent: r,
 				Err:    err,
 			})
 		}
-		return r, changeView(NewHomeView())
+		r.repo.Repopath = newPath
+		return r, ChangeView(MakeHomeList())
 	}
 	return r, nil
 }
@@ -79,11 +93,14 @@ func (rr reporename) View() string {
 	return s
 }
 
-func (rr reporename) GetKeymapString() string {
-	return "enter - confirm, esc - back"
+func (rr reporename) GetKeymapString() []key.Binding {
+	return []key.Binding{
+		reporename_accept,
+		reporename_cancel,
+	}
 }
 
-func OpenRepoRename(parent richmodel, repo gitlib.Repo) reporename {
+func OpenRepoRename(parent Richmodel, repo gitlib.Repo) reporename {
 	input := textinput.New()
 	input.Focus()
 
