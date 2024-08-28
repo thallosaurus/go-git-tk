@@ -1,28 +1,15 @@
 package views
 
 import (
-	"fmt"
 	"go-git-tk/pkg/gitlib"
 
-	"io"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-type homeListItem struct {
-	repo gitlib.Repo
-}
-
-func (i homeListItem) FilterValue() string { return i.repo.GetName() }
-
-type home_list struct {
-	list list.Model
-}
 
 var (
 	enter_repo key.Binding = key.NewBinding(
@@ -37,7 +24,16 @@ var (
 		key.WithKeys("k"),
 		key.WithHelp("k", "key management"),
 	)
+	import_repo key.Binding = key.NewBinding(
+		key.WithKeys("i"),
+		key.WithHelp("i", "import repo"),
+		key.WithDisabled(),
+	)
 )
+
+type home_list struct {
+	list list.Model
+}
 
 func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -55,7 +51,7 @@ func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		i.list.SetWidth(msg.Width)
-		i.list.SetHeight(msg.Height - 1)
+		i.list.SetHeight(getViewportHeight())
 		return i, nil
 
 	case tea.KeyMsg:
@@ -76,6 +72,9 @@ func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, key_mgmt_key):
 			return i, openKeyMgmt()
+
+		case key.Matches(msg, import_repo):
+			return i, ChangeView(repo_import{})
 		}
 	}
 
@@ -92,11 +91,13 @@ func openKeyMgmt() tea.Cmd {
 }
 
 func (i home_list) View() string {
-	return i.list.View()
+	return titleStyle.Render("Git Server Toolkit") + "\n" + i.list.View()
 }
 
 func (i home_list) Init() tea.Cmd {
-	return nil
+	i.list.SetWidth(term_width)
+	i.list.SetHeight(getViewportHeight())
+	return tea.ShowCursor
 }
 
 func (i home_list) GetKeymapString() []key.Binding {
@@ -104,6 +105,7 @@ func (i home_list) GetKeymapString() []key.Binding {
 		enter_repo,
 		new_repo,
 		key_mgmt_key,
+		//import_repo,
 	}
 }
 
@@ -129,44 +131,15 @@ func MakeHomeList() home_list {
 	}
 
 	list := list.New(items, homeListDelegate{}, term_width, term_height-1)
-	list.Title = "Git Server Toolkit"
 
 	list.SetShowStatusBar(false)
+	list.SetShowTitle(false)
 	//list.SetStatusBarItemName("repo", "repos")
 	list.SetShowHelp(false)
 	list.DisableQuitKeybindings()
+	list.Styles.Title = titleStyle
 
 	return home_list{
 		list: list,
 	}
-}
-
-type homeListDelegate struct{}
-
-func (h homeListDelegate) Height() int {
-	return 1
-}
-
-func (h homeListDelegate) Spacing() int {
-	return 0
-}
-
-func (d homeListDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-
-func (d homeListDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(homeListItem)
-	if !ok {
-		return
-	}
-
-	str := fmt.Sprintf("%d. %s", index+1, i.repo.GetName())
-
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
-		}
-	}
-
-	fmt.Fprint(w, fn(str))
 }

@@ -25,7 +25,6 @@ var (
 type climodel struct {
 	selectedView Richmodel
 	show_keys    bool
-	ready        bool
 }
 
 type Richmodel interface {
@@ -37,7 +36,6 @@ func NewCliModel() climodel {
 	return climodel{
 		selectedView: nil,
 		show_keys:    false,
-		ready:        false,
 	}
 }
 
@@ -77,10 +75,6 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		term_width = m.Width
 		term_height = m.Height
 
-		if !c.ready {
-			c.ready = true
-		}
-
 	case switchView:
 		c.selectedView = m.model
 		return c, tea.Batch(c.selectedView.Init(), tea.ClearScreen)
@@ -109,7 +103,7 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (c climodel) View() string {
-	if c.selectedView != nil && c.ready {
+	if c.selectedView != nil {
 		s := c.selectedView.View()
 		/*if c.show_keys {
 			s += "\n" + c.GetKeymapString()
@@ -132,18 +126,6 @@ func (c climodel) View() string {
 }
 
 func (c climodel) GetKeymapString() []key.Binding {
-	var s string
-
-	s += "ctrl+c - quit"
-
-	if c.selectedView != nil {
-		s += " • "
-		//s += c.selectedView.GetKeymapString() + "\n"
-	}
-
-	s = helpStyle.Render(s)
-
-	//return s
 	return []key.Binding{
 		cli_quit,
 	}

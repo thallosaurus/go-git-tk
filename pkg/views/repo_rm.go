@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"go-git-tk/pkg/gitlib"
 	"os"
 	"path"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -23,9 +25,10 @@ var (
 )
 
 type reporemove struct {
-	parent  Richmodel
-	repo    gitlib.Repo
-	confirm textinput.Model
+	parent   Richmodel
+	repo     gitlib.Repo
+	confirm  textinput.Model
+	viewport viewport.Model
 }
 
 func (r reporemove) Init() tea.Cmd {
@@ -42,6 +45,9 @@ func finalRemoveRepo(path string) tea.Cmd {
 
 func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
+	case tea.WindowSizeMsg:
+		r.viewport.Width = getInnerViewportWidth()
+		r.viewport.Height = getViewportHeight() - 3
 	case tea.KeyMsg:
 		switch m.String() {
 		case "esc":
@@ -51,11 +57,6 @@ func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if r.confirm.Value() == path.Base(r.repo.Repopath) {
 				return r, finalRemoveRepo(r.repo.Repopath)
 			}
-
-		default:
-			v, c := r.confirm.Update(msg)
-			r.confirm = v
-			return r, c
 
 		}
 
@@ -72,20 +73,33 @@ func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return r, nil
+	var tcmd tea.Cmd
+	r.confirm, tcmd = r.confirm.Update(msg)
+
+	var vcmd tea.Cmd
+	r.viewport, vcmd = r.viewport.Update(msg)
+
+	return r, tea.Batch(tcmd, vcmd)
 }
 
-func (r reporemove) View() string {
+func getRepoRmViewportContent() string {
 	var sb strings.Builder
 
 	sb.WriteString("Are you sure to remove the Repo?\n\n\n")
 	sb.WriteString(dangerousStyle.Render("You will lose everything in this repository! No undo!"))
 	sb.WriteString("\n\n\n")
-	sb.WriteString("Type the name of the repository below.\n\n")
+	sb.WriteString("Type the name of the repository below and press enter.\n\n")
 
-	sb.WriteString(r.confirm.View())
-
+	//sb.WriteString(r.confirm.View())
 	return sb.String()
+}
+
+func (r reporemove) View() string {
+	var sb string
+
+	sb += fmt.Sprintf("%s\n%s\n%s", titleStyle.Render("Remove Repository "+r.repo.GetName()), r.viewport.View(), mainStyle.Render(r.confirm.View()))
+
+	return sb
 }
 
 func (r reporemove) GetKeymapString() []key.Binding {
@@ -96,14 +110,19 @@ func (r reporemove) GetKeymapString() []key.Binding {
 }
 
 func ConfirmRepoRemove(parent Richmodel, repo gitlib.Repo) reporemove {
+	vp := viewport.New(getInnerViewportWidth(), getViewportHeight()-3)
+	vp.SetContent(getRepoRmViewportContent())
+	vp.Style = mainStyle
+
 	t := textinput.New()
 	t.Focus()
 	t.CharLimit = 32
 	t.Placeholder = path.Base(repo.Repopath)
 
 	return reporemove{
-		parent:  parent,
-		repo:    repo,
-		confirm: t,
+		parent:   parent,
+		repo:     repo,
+		confirm:  t,
+		viewport: vp,
 	}
 }

@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"go-git-tk/pkg/gitlib"
 	"log"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/parser"
 )
 
 type repoview struct {
@@ -41,8 +44,9 @@ var (
 
 func MakeRepoView(p Richmodel, repo gitlib.Repo) repoview {
 	//targets := make(map[string]func() tea.Cmd, 0)
-	vp := viewport.New(term_width, term_height-2)
+	vp := viewport.New(term_width, getViewportHeight())
 	vp.SetContent(getViewportContent(repo))
+	vp.Style = mainStyle
 
 	return repoview{
 		repo:     repo,
@@ -52,21 +56,23 @@ func MakeRepoView(p Richmodel, repo gitlib.Repo) repoview {
 }
 
 func (r repoview) Init() tea.Cmd {
+	r.viewport.Width = getInnerViewportWidth()
+	r.viewport.Height = getViewportHeight()
 	return nil
 }
 
 func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
-		r.viewport.Width = m.Width
-		r.viewport.Height = m.Height - 2
+		r.viewport.Width = getInnerViewportWidth()
+		r.viewport.Height = getViewportHeight()
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(m, repoview_cancel):
 			return r, ChangeView(r.parent)
 
 		case key.Matches(m, repoview_hook_edit):
-			return r, ChangeView(OpenHookEdit(r, r.repo))
+			return r, ChangeView(MakeHookList(r, r.repo))
 
 		case key.Matches(m, repoview_delete):
 			return r, ChangeView(ConfirmRepoRemove(r, r.repo))
@@ -84,7 +90,8 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (r repoview) View() string {
 	//return ""
-	return fmt.Sprintf("%s\n%s", "Manage Repository", r.viewport.View())
+
+	return fmt.Sprintf("%s\n%s", titleStyle.Render("Manage Repository"), r.viewport.View())
 }
 
 func (r repoview) GetKeymapString() []key.Binding {
@@ -96,10 +103,24 @@ func (r repoview) GetKeymapString() []key.Binding {
 	}
 }
 
+func listToView(branches []string) string {
+	var s string
+	if len(branches) != 0 {
+
+		for _, b := range branches {
+			s += fmt.Sprintf("- %s\n", b)
+		}
+	} else {
+		s += emptyStyle.Render(" <empty>") + "\n"
+	}
+
+	return s
+}
+
 func getViewportContent(repo gitlib.Repo) string {
 	var s string
-	s += fmt.Sprintf("Name: %s\n", repo.GetName())
-	s += fmt.Sprintf("Repo URL: %s@%s:%s\n", ssh_user, ssh_base_domain, repo.GetName())
+	s += fmt.Sprintf("%s %s\n", selectedStyle.Render("Name:"), repo.GetName())
+	s += fmt.Sprintf("%s %s@%s:%s\n", selectedStyle.Render("Repo URL:"), ssh_user, ssh_base_domain, repo.GetName())
 	s += "\n"
 
 	branches, err := repo.GetBranches()
@@ -107,49 +128,56 @@ func getViewportContent(repo gitlib.Repo) string {
 		log.Panic(err)
 	}
 
-	s += "Branches:"
-	if len(branches) != 0 {
+	s += selectedStyle.Render("Branches:") + "\n"
+	s += listToView(branches)
+	s += "\n"
 
-		for _, b := range branches {
-			s += fmt.Sprintf("\n- %s\n", b)
-		}
-	} else {
-		s += emptyStyle.Render(" <empty>") + "\n"
-	}
-	//	s += viewIter(branches)
-
-	s += "Tags:"
+	s += selectedStyle.Render("Tags:") + "\n"
 	tags, err := repo.GetTags()
 	if err != nil {
 		log.Panic(err)
 	}
-	if len(tags) != 0 {
-
-		for _, t := range tags {
-			s += fmt.Sprintf("\n- %s\n", t)
-		}
-	} else {
-		s += emptyStyle.Render(" <empty>") + "\n"
-	}
+	s += listToView(tags)
+	s += "\n"
 
 	c, err := repo.GetCommitters()
 	if err != nil {
 		log.Panic(err)
 	}
-
-	//s += "nl"
-	s += "Committers:"
-
-	for _, email := range c {
-		s += fmt.Sprintf("\n - %s", email)
-	}
-
-	if len(c) == 0 {
-		s += emptyStyle.Render(" <empty>") + "\n"
-	} else {
-
-	}
 	s += "\n"
 
+	//s += "nl"
+	s += selectedStyle.Render("Committers:") + "\n"
+	s += listToView(c)
+	s += "\n"
+
+	s += selectedStyle.Render("Readme:") + "\n"
+
+	rr, err := repo.GetReadme()
+	if err != nil {
+		//log.Panic(err)
+		s += emptyStyle.Render("No readme published")
+	} else {
+		s += rr
+	}
+
 	return s
+}
+
+func renderReadme(md string) string {
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
+	p := parser.NewWithExtensions(extensions)
+
+	ast := markdown.Parse([]byte(md), p)
+
+	c := ast.AsContainer()
+
+	mdc := c.GetChildren()
+
+	var sb strings.Builder
+	for _, v := range mdc {
+		sb.Write(v.AsContainer().Content)
+	}
+
+	return sb.String()
 }

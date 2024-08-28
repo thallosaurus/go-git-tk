@@ -2,30 +2,51 @@ package gitlib
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
+	"github.com/go-git/go-git/v5/storage/memory"
 )
 
 func MakeNewRepo(path string) (*Repo, error) {
-	r, err := createGitRepo(path)
+	_, err := createGitRepo(path)
 	if err != nil {
+		//repo.SetDescription(repo.GetName() + " repository")
 		return nil, err
 	} else {
-		repo := &Repo{
-			git:      r,
-			Repopath: path,
-		}
+		rr, err := importExistingRepo(path)
 
-		repo.SetDescription(repo.GetName() + " repository")
-
-		return repo, nil
+		return rr, err
 	}
+}
+
+func importExistingRepo(path string) (*Repo, error) {
+	r, err := git.PlainOpen(path)
+	if err != nil {
+		return nil, err
+	}
+
+	fs := memfs.New()
+
+	_, err = git.Clone(memory.NewStorage(), fs, &git.CloneOptions{
+		URL: path,
+	})
+
+	repo := &Repo{
+		git:        r,
+		clonedRepo: fs,
+		Repopath:   path,
+	}
+
+	return repo, nil
 }
 
 func createGitRepo(repoPath string) (*git.Repository, error) {
@@ -37,8 +58,29 @@ func createGitRepo(repoPath string) (*git.Repository, error) {
 }
 
 type Repo struct {
-	git      *git.Repository
-	Repopath string
+	git        *git.Repository
+	clonedRepo billy.Filesystem
+	Repopath   string
+}
+
+func (r Repo) GetReadme() (string, error) {
+	if _, err := r.clonedRepo.Stat("README.md"); err != nil {
+		// doesnt exist
+		return "", err
+	} else {
+
+		f, err := r.clonedRepo.Open("README.md")
+		if err != nil {
+			return "", err
+		}
+
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return "", err
+		}
+
+		return string(b), nil
+	}
 }
 
 func (r Repo) GetBranches() ([]string, error) {
@@ -88,7 +130,7 @@ func iterCommittersStringArray(c object.CommitIter) []string {
 	})
 
 	for author, email := range committers {
-		s = append(s, fmt.Sprintf("\n - %s <%s>", author, email))
+		s = append(s, fmt.Sprintf("%s <%s>", author, email))
 	}
 
 	return s
@@ -151,14 +193,15 @@ func GetRepos(root string) ([]Repo, error) {
 }
 
 func extractRepo(p string) *Repo {
-	r, err := git.PlainOpen(p)
-	if err != nil {
-		fmt.Println(err)
-		return nil
-	}
-
-	return &Repo{
+	/*return &Repo{
 		git:      r,
 		Repopath: p,
+	}*/
+
+	f, err := importExistingRepo(p)
+	if err != nil {
+		log.Panic(err)
 	}
+
+	return f
 }

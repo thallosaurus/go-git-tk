@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"go-git-tk/pkg/gitlib"
 
 	"os"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -31,28 +33,26 @@ var (
 type newrepo struct {
 	parent     Richmodel
 	focusIndex int
-	inputs     []textinput.Model
+	input      textinput.Model
+	viewport   viewport.Model
 }
 
 func NewRepoView(parent Richmodel) newrepo {
+	vp := viewport.New(getInnerViewportWidth(), getViewportHeight()-3)
+	vp.SetContent("Enter the name of the new Repository and press enter")
+	vp.Style = mainStyle
+
+	ti := textinput.New()
+	ti.CharLimit = 32
+
+	ti.Placeholder = "Repository Name"
+	ti.Focus()
+
 	r := newrepo{
 		focusIndex: 0,
-		inputs:     make([]textinput.Model, 1),
+		input:      ti,
 		parent:     parent,
-	}
-
-	var t textinput.Model
-	for i := range r.inputs {
-		t = textinput.New()
-		t.CharLimit = 32
-
-		switch i {
-		case 0:
-			t.Placeholder = "Repository Name"
-			t.Focus()
-		}
-
-		r.inputs[i] = t
+		viewport:   vp,
 	}
 
 	return r
@@ -64,38 +64,17 @@ func (n newrepo) Init() tea.Cmd {
 
 func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
+	case tea.WindowSizeMsg:
+		n.viewport.Width = getInnerViewportWidth()
+		n.viewport.Height = getViewportHeight() - 3
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(m, newrepo_cancel_key):
 			return n, ChangeView(MakeHomeList())
 
-		case key.Matches(m, newrepo_select_textview):
-			s := m.String()
-
-			if s == "up" || s == "shift+tab" {
-				if n.focusIndex < len(n.inputs) {
-					n.focusIndex++
-				}
-			} else {
-				if n.focusIndex > 0 {
-					n.focusIndex--
-				}
-			}
-
-			cmds := make([]tea.Cmd, len(n.inputs))
-			for i := 0; i <= len(n.inputs)-1; i++ {
-				if i == n.focusIndex {
-					cmds[i] = n.inputs[i].Focus()
-					continue
-				}
-
-				n.inputs[i].Blur()
-			}
-			return n, tea.Batch(cmds...)
-
 		case key.Matches(m, newrepo_ok_key):
 			// create new repository
-			repoName := n.inputs[0].Value()
+			repoName := n.input.Value()
 
 			if len(strings.TrimSpace(repoName)) == 0 {
 				return n, nil
@@ -122,35 +101,31 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			return n, ChangeView(MakeRepoView(n.parent, *repo))
 
-		default:
-			return n, n.updateInputs(msg)
 		}
 	}
 
-	return n, nil
+	return n, n.updateInputs(msg)
 }
 
 func (n newrepo) View() string {
-	var s string
-	s += "New Repository\n\n"
+	var sb string
 
-	for i := range n.inputs {
-		s += n.inputs[i].View() + "\n"
-	}
+	sb += fmt.Sprintf("%s\n%s\n%s", titleStyle.Render("New Repository "), n.viewport.View(), mainStyle.Render(n.input.View()))
 
-	return s
+	return sb
 }
 
-func (m newrepo) updateInputs(msg tea.Msg) tea.Cmd {
-	cmds := make([]tea.Cmd, len(m.inputs))
+func (m *newrepo) updateInputs(msg tea.Msg) tea.Cmd {
 
 	// Only text inputs with Focus() set will respond, so it's safe to simply
 	// update all of them here without any further logic.
-	for i := range m.inputs {
-		m.inputs[i], cmds[i] = m.inputs[i].Update(msg)
-	}
+	var tcmd tea.Cmd
+	m.input, tcmd = m.input.Update(msg)
 
-	return tea.Batch(cmds...)
+	var vcmd tea.Cmd
+	m.viewport, vcmd = m.viewport.Update(msg)
+
+	return tea.Batch(tcmd, vcmd)
 }
 
 func sanitize_name(s string) string {
