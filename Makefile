@@ -1,10 +1,11 @@
 all: build
 
 prereq:
-	rm -rf build/git-tk-shell
+	rm -rf build/*
 
 build: prereq
-	go build -o build/git-tk-shell git-tk-shell.go
+	go build -o build/shell cmd/shell/main.go
+	go build -o build/access cmd/access/main.go
 
 install: build
 	go install

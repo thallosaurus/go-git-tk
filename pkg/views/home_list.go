@@ -97,7 +97,7 @@ func (i home_list) View() string {
 func (i home_list) Init() tea.Cmd {
 	i.list.SetWidth(term_width)
 	i.list.SetHeight(getViewportHeight())
-	return tea.ShowCursor
+	return tea.Batch(tea.ShowCursor, tea.WindowSize())
 }
 
 func (i home_list) GetKeymapString() []key.Binding {

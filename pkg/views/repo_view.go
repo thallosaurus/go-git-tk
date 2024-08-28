@@ -158,7 +158,7 @@ func getViewportContent(repo gitlib.Repo) string {
 		//log.Panic(err)
 		s += emptyStyle.Render("No readme published")
 	} else {
-		s += rr
+		s += rr + "\n\n"
 	}
 
 	return s
@@ -169,9 +169,7 @@ func renderReadme(md string) string {
 	p := parser.NewWithExtensions(extensions)
 
 	ast := markdown.Parse([]byte(md), p)
-
 	c := ast.AsContainer()
-
 	mdc := c.GetChildren()
 
 	var sb strings.Builder

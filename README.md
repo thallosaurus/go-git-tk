@@ -1,7 +1,7 @@
 # go-git-tk
 
 ## What is this?
-`Go Git Toolkit` is a frontend for bare Git repositories. It's a small piece of software intended to be used with SSH and git. See [SETUP.md](SETUP.md) for assistance
+`Go Git Toolkit` is a frontend for bare Git repositories. Its purpose is to serve as a TUI Manager for a Gitserver. See [SETUP.md](SETUP.md) for assistance
 
 You have the options to:
 - Create new Repositories
