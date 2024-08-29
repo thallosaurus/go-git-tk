@@ -1,5 +1,6 @@
 {
     "Ssh_base_domain": "localhost",
     "Ssh_User": "git",
-    "ShowBorders": true
+    "ShowBorders": false,
+    "ShowFullRepoPath": false
 }

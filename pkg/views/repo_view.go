@@ -133,7 +133,14 @@ func listToView(branches []string) string {
 func getViewportContent(repo gitlib.Repo) string {
 	var s string
 	s += fmt.Sprintf("%s %s\n", layouts.SelectedStyle.Render("Name:"), repo.GetName())
-	s += fmt.Sprintf("%s %s@%s:%s\n", layouts.SelectedStyle.Render("Repo URL:"), conf.Ssh_User, conf.Ssh_base_domain, repo.GetName())
+
+	var name string
+	if conf.ShowFullRepoPath {
+		name = repo.Repopath
+	} else {
+		name = repo.GetName()
+	}
+	s += fmt.Sprintf("%s %s@%s:%s\n", layouts.SelectedStyle.Render("Repo URL:"), conf.Ssh_User, conf.Ssh_base_domain, name)
 	s += "\n"
 
 	branches, err := repo.GetBranches()
