@@ -5,8 +5,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// Describes the layout of the outer origin view
-
 func GetOriginInnerWidth() int {
 	return term_width - MainStyle.GetHorizontalFrameSize() + 6
 }

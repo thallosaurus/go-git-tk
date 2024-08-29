@@ -171,7 +171,7 @@ func getViewportContent(repo gitlib.Repo) string {
 		//log.Panic(err)
 		s += layouts.EmptyStyle.Render("No readme published")
 	} else {
-		s += rr + "\n\n"
+		s += rr
 	}
 
 	return s

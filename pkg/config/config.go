@@ -11,6 +11,7 @@ const DEFAULT_CONFIG_PATH = "/etc/gittk/config.json"
 type Config struct {
 	Ssh_base_domain string
 	Ssh_User        string
+	ShowBorders     bool
 }
 
 func ReadConfig(path ...string) Config {

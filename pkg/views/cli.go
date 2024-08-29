@@ -12,7 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var conf = config.ReadConfig("./scripts/gittk-shell/config.json")
+var conf = config.ReadConfig("./scripts/gittk/shell.json")
 
 var (
 	cli_quit key.Binding = key.NewBinding(
@@ -37,6 +37,10 @@ func NewCliModel() climodel {
 	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight())
 	vp.KeyMap.Down.SetEnabled(false)
 	vp.KeyMap.Up.SetEnabled(false)
+
+	if conf.ShowBorders {
+		layouts.TurnOnDebugBorders()
+	}
 
 	return climodel{
 		selectedView: nil,
