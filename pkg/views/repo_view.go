@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"go-git-tk/pkg/config"
 	"go-git-tk/pkg/gitlib"
 	"go-git-tk/pkg/layouts"
 	"log"
@@ -40,6 +41,10 @@ var (
 	repoview_rename key.Binding = key.NewBinding(
 		key.WithKeys("r"),
 		key.WithHelp("r", "rename repo"),
+	)
+	repoview_clone key.Binding = key.NewBinding(
+		key.WithKeys("c"),
+		key.WithHelp("c", "clone to new workdir"),
 	)
 	repoview_browse key.Binding = key.NewBinding(
 		key.WithKeys("b"),
@@ -90,6 +95,8 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(m, repoview_rename):
 			return r, ChangeView(OpenRepoRename(r, r.repo))
 
+		case key.Matches(m, repoview_clone):
+			return r, ChangeView(OpenRepoClone(r, r.repo))
 			/*case key.Matches(m, repoview_browse):
 			return r, ChangeView(MakeRepoBrowser(r, r.repo.ClonedRepo))*/
 		}
@@ -113,6 +120,7 @@ func (r repoview) GetKeymapString() []key.Binding {
 		repoview_rename,
 		repoview_hook_edit,
 		repoview_delete,
+		repoview_clone,
 	}
 }
 
@@ -130,17 +138,28 @@ func listToView(branches []string) string {
 	return s
 }
 
+func getRepoURL(repo gitlib.Repo) string {
+	var url string
+	if config.Conf.EnableSSH {
+		var name string
+		if config.Conf.ShowFullRepoPath {
+			name = repo.Repopath
+		} else {
+			name = repo.GetName()
+		}
+		url = fmt.Sprintf("%s@%s:%s", config.Conf.SSHUser, config.Conf.SSHBaseDomain, name)
+	} else {
+		url = repo.Repopath
+	}
+
+	return url
+}
+
 func getViewportContent(repo gitlib.Repo) string {
 	var s string
 	s += fmt.Sprintf("%s %s\n", layouts.SelectedStyle.Render("Name:"), repo.GetName())
 
-	var name string
-	if conf.ShowFullRepoPath {
-		name = repo.Repopath
-	} else {
-		name = repo.GetName()
-	}
-	s += fmt.Sprintf("%s %s@%s:%s\n", layouts.SelectedStyle.Render("Repo URL:"), conf.Ssh_User, conf.Ssh_base_domain, name)
+	s += fmt.Sprintf("%s %s\n", layouts.SelectedStyle.Render("Repo URL:"), getRepoURL(repo))
 	s += "\n"
 
 	branches, err := repo.GetBranches()
@@ -158,7 +177,7 @@ func getViewportContent(repo gitlib.Repo) string {
 		log.Panic(err)
 	}
 	s += listToView(tags)
-	s += "\n"
+	//s += "\n"
 
 	c, err := repo.GetCommitters()
 	if err != nil {

@@ -1,6 +1,8 @@
 package layouts
 
 import (
+	"go-git-tk/pkg/config"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -29,12 +31,14 @@ func UpdateTermSize(msg tea.WindowSizeMsg) {
 func borderize(s lipgloss.Style, v bool) lipgloss.Style {
 	return s.Border(lipgloss.NormalBorder(), v)
 }
+
 func TurnOnDebugBorders() {
 	MainStyle = borderize(MainStyle, true)
 	HeaderStyle = borderize(HeaderStyle, true)
 	ContentStyle = borderize(ContentStyle, true)
 	FooterStyle = borderize(FooterStyle, true)
 }
+
 func TurnOffDebugBorders() {
 	MainStyle = borderize(MainStyle, false)
 	HeaderStyle = borderize(HeaderStyle, false)
@@ -42,16 +46,20 @@ func TurnOffDebugBorders() {
 	FooterStyle = borderize(FooterStyle, false)
 }
 
+func GetFooterWidth() int {
+	return GetContentInnerWidth() + MainStyle.GetHorizontalFrameSize()
+}
+
 var (
 	term_width   = 0
 	term_height  = 0
-	MainStyle    = lipgloss.NewStyle().Padding(0).BorderForeground(lipgloss.Color("170"))
-	HeaderStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(lipgloss.Color("170")).Padding(1).BorderForeground(lipgloss.Color("170"))
-	ContentStyle = lipgloss.NewStyle().Padding(1).BorderForeground(lipgloss.Color("170"))
-	FooterStyle  = lipgloss.NewStyle().BorderForeground(lipgloss.Color("170"))
+	MainStyle    = lipgloss.NewStyle().Padding(0).BorderForeground(lipgloss.Color(config.Conf.ColorTint))
+	HeaderStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(lipgloss.Color(config.Conf.ColorTint)).Padding(1).BorderForeground(lipgloss.Color(config.Conf.ColorTint))
+	ContentStyle = lipgloss.NewStyle().Padding(1).BorderForeground(lipgloss.Color(config.Conf.ColorTint))
+	FooterStyle  = lipgloss.NewStyle().BorderForeground(lipgloss.Color(config.Conf.ColorTint)).Foreground(EmptyStyle.GetForeground())
 
 	ItemStyle     = lipgloss.NewStyle().PaddingLeft(2)
-	SelectedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("170"))
+	SelectedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(config.Conf.ColorTint))
 
 	DangerousStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true)
 	EmptyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#808080"))

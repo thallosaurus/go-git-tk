@@ -114,7 +114,7 @@ func OpenRepoRename(parent Richmodel, repo gitlib.Repo) reporename {
 
 	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight()-3)
 	vp.SetContent("Enter the new name of the new Repository and press enter.\n\nDont forget to update the Remote URL!")
-	vp.Style = layouts.ContentStyle
+	//vp.Style = layouts.ContentStyle
 
 	basename := path.Base(repo.Repopath)
 	input.SetValue(strings.TrimSuffix(basename, filepath.Ext(basename)))

@@ -2,6 +2,7 @@ package gitlib
 
 import (
 	"fmt"
+	"go-git-tk/pkg/config"
 	"io"
 	"log"
 	"os"
@@ -61,6 +62,12 @@ type Repo struct {
 	git        *git.Repository
 	ClonedRepo billy.Filesystem
 	Repopath   string
+}
+
+func (r Repo) CloneToWorkdir() (*git.Repository, error) {
+	return git.PlainClone(config.Conf.RepoWorkdir+"/"+r.GetName(), false, &git.CloneOptions{
+		URL: r.Repopath,
+	})
 }
 
 func (r Repo) GetReadme() (string, error) {

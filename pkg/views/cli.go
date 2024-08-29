@@ -12,8 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var conf = config.ReadConfig("./scripts/gittk/shell.json")
-
 var (
 	cli_quit key.Binding = key.NewBinding(
 		key.WithKeys("ctrl+c"),
@@ -25,6 +23,7 @@ type climodel struct {
 	selectedView Richmodel
 	show_keys    bool
 	rootPane     viewport.Model
+	footerPane   viewport.Model
 }
 
 type Richmodel interface {
@@ -38,7 +37,12 @@ func NewCliModel() climodel {
 	vp.KeyMap.Down.SetEnabled(false)
 	vp.KeyMap.Up.SetEnabled(false)
 
-	if conf.ShowBorders {
+	fp := viewport.New(layouts.GetContentInnerWidth(), 1)
+	fp.Width = layouts.GetContentInnerWidth() + 2
+	fp.KeyMap.Down.SetEnabled(false)
+	fp.KeyMap.Up.SetEnabled(false)
+
+	if config.Conf.ShowBorders {
 		layouts.TurnOnDebugBorders()
 	}
 
@@ -46,6 +50,7 @@ func NewCliModel() climodel {
 		selectedView: nil,
 		show_keys:    false,
 		rootPane:     vp,
+		footerPane:   fp,
 	}
 }
 
@@ -86,6 +91,7 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
 		layouts.UpdateTermSize(m)
+		c.footerPane.Width = layouts.GetContentInnerWidth() + 2
 		c.rootPane.Width = layouts.GetContentInnerWidth()
 		c.rootPane.Height = layouts.GetContentInnerHeight()
 
@@ -124,7 +130,7 @@ func (c climodel) View() string {
 		//s += layouts.ContentStyle.Render(c.selectedView.View())
 		s += layouts.ContentStyle.Render(c.rootPane.View())
 		/*if c.show_keys {
-			s += "\n" + c.GetKeymapString()
+		s += "\n" + c.GetKeymapString()
 		}*/
 
 		km := append(c.GetKeymapString(), c.selectedView.GetKeymapString()...)
@@ -133,11 +139,12 @@ func (c climodel) View() string {
 		for _, val := range km {
 
 			if val.Enabled() {
-				sb = append(sb, fmt.Sprintf("<%s>: %s", val.Help().Key, val.Help().Desc))
+				sb = append(sb, fmt.Sprintf("<%s> %s", val.Help().Key, val.Help().Desc))
 			}
 		}
+		c.footerPane.SetContent(strings.Join(sb, " • "))
 
-		quickhelp := layouts.FooterStyle.Render(strings.Join(sb, " • "))
+		quickhelp := layouts.FooterStyle.Render(c.footerPane.View())
 		v := fmt.Sprintf("%s\n%s", s, quickhelp)
 
 		return layouts.MainStyle.Render(v)

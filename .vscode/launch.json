@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "./git-tk-shell.go",
+            "program": "cmd/shell/main.go",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         }

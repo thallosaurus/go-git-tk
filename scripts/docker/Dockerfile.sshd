@@ -13,8 +13,6 @@ RUN mkdir -p /var/local/git-tk/repos
 
 #RUN cp /app/scripts/sshd.d/92-git-config.conf /etc/ssh/sshd_config.d/02-git-config.conf
 
-#RUN ssh-keygen -f /root/.ssh/id_ed25519 -q -N ""
-
 WORKDIR /etc/ssh
 RUN ssh-keygen -A
 WORKDIR /var/local/git-tk

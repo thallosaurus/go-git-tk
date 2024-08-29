@@ -1,6 +1,9 @@
 {
-    "Ssh_base_domain": "localhost",
-    "Ssh_User": "git",
-    "ShowBorders": false,
-    "ShowFullRepoPath": false
+    "EnableSSH": true,
+    "SSHBaseDomain": "localhost",
+    "SSHUser": "git",
+    "ShowBorders": true,
+    "ShowFullRepoPath": false,
+    "ColorTint": "#f6b26b",
+    "RepoWorkdir": "/Users/rillo/Desktop/Coding/go/tui-playground/testrepos"
 }

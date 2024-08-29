@@ -18,7 +18,7 @@ type errorview struct {
 }
 
 func (ev errorview) GetHeaderString() string {
-	return ""
+	return "An error occured!"
 }
 
 func (ev errorview) Init() tea.Cmd {
@@ -38,11 +38,10 @@ func (ev errorview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (ev errorview) View() string {
-	s := "An error occured:\n"
-	s += ev.Err.Error()
-	s += "\n\nPress Enter to continue"
+	//s := "An error occured:\n"
+	//s += "\n\nPress Enter to continue"
 
-	return s
+	return ev.Err.Error()
 }
 
 func (ev errorview) GetKeymapString() []key.Binding {
