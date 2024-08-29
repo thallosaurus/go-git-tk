@@ -28,7 +28,6 @@ var (
 	import_repo key.Binding = key.NewBinding(
 		key.WithKeys("i"),
 		key.WithHelp("i", "import repo"),
-		key.WithDisabled(),
 	)
 )
 
@@ -80,8 +79,8 @@ func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, key_mgmt_key):
 			return i, openKeyMgmt()
 
-			/*case key.Matches(msg, import_repo):
-			return i, ChangeView(repo_import{})*/
+		case key.Matches(msg, import_repo):
+			return i, ChangeView(OpenRepoImport(i))
 		}
 	}
 
@@ -113,7 +112,7 @@ func (i home_list) GetKeymapString() []key.Binding {
 		enter_repo,
 		new_repo,
 		key_mgmt_key,
-		//import_repo,
+		import_repo,
 	}
 }
 

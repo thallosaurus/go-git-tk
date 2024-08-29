@@ -50,6 +50,19 @@ func importExistingRepo(path string) (*Repo, error) {
 	return repo, nil
 }
 
+func ImportRemoteRepo(destPath string, url string) (*Repo, error) {
+	_, err := git.PlainClone(destPath, true, &git.CloneOptions{
+		URL:          url,
+		SingleBranch: false,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return importExistingRepo(destPath)
+}
+
 func createGitRepo(repoPath string) (*git.Repository, error) {
 	//path := "./repos/" + sanitize_name(repoName)
 
