@@ -17,6 +17,10 @@ type errorview struct {
 	Err    error
 }
 
+func (ev errorview) GetHeaderString() string {
+	return ""
+}
+
 func (ev errorview) Init() tea.Cmd {
 	return nil
 }

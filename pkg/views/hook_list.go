@@ -2,6 +2,7 @@ package views
 
 import (
 	"go-git-tk/pkg/gitlib"
+	"go-git-tk/pkg/layouts"
 	"log"
 	"os"
 	"os/exec"
@@ -51,14 +52,13 @@ func MakeHookList(parent Richmodel, r gitlib.Repo) hook_list {
 		},
 	}
 
-	l := list.New(items, hookListDelegate{}, term_width, getViewportHeight())
+	l := list.New(items, hookListDelegate{}, layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight())
 
 	l.SetShowStatusBar(false)
 	l.SetShowTitle(false)
 	//list.SetStatusBarItemName("repo", "repos")
 	l.SetShowHelp(false)
 	l.DisableQuitKeybindings()
-	l.Styles.Title = titleStyle
 
 	return hook_list{
 		list:   l,
@@ -67,6 +67,9 @@ func MakeHookList(parent Richmodel, r gitlib.Repo) hook_list {
 	}
 }
 
+func (k hook_list) GetHeaderString() string {
+	return "Select Hook to edit"
+}
 func (k hook_list) Init() tea.Cmd {
 	return nil
 }
@@ -74,8 +77,11 @@ func (k hook_list) Init() tea.Cmd {
 func (k hook_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		k.list.SetWidth(msg.Width)
-		k.list.SetHeight(getViewportHeight())
+		/*k.list.SetWidth(msg.Width)
+		k.list.SetHeight(getViewportHeight())*/
+
+		k.list.SetWidth(layouts.GetContentInnerWidth())
+		k.list.SetHeight(layouts.GetContentInnerHeight())
 		return k, nil
 
 	case tea.KeyMsg:
@@ -110,7 +116,7 @@ func (k hook_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (k hook_list) View() string {
-	return titleStyle.Render("Edit Hooks") + "\n" + k.list.View()
+	return k.list.View()
 }
 
 func (k hook_list) GetKeymapString() []key.Binding {

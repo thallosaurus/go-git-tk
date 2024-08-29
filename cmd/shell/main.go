@@ -11,7 +11,7 @@ func main() {
 	initialModel := views.NewCliModel()
 	initialModel.SetKeyMappingsShown(false)
 
-	p := tea.NewProgram(initialModel)
+	p := tea.NewProgram(initialModel, tea.WithAltScreen())
 
 	if _, err := p.Run(); err != nil {
 		fmt.Println("could not start program:", err)

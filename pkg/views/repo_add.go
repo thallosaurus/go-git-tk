@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"go-git-tk/pkg/gitlib"
+	"go-git-tk/pkg/layouts"
 
 	"os"
 	"strings"
@@ -38,9 +39,9 @@ type newrepo struct {
 }
 
 func NewRepoView(parent Richmodel) newrepo {
-	vp := viewport.New(getInnerViewportWidth(), getViewportHeight()-3)
+	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight())
 	vp.SetContent("Enter the name of the new Repository and press enter")
-	vp.Style = mainStyle
+	vp.Style = layouts.ContentStyle
 
 	ti := textinput.New()
 	ti.CharLimit = 32
@@ -65,8 +66,8 @@ func (n newrepo) Init() tea.Cmd {
 func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
-		n.viewport.Width = getInnerViewportWidth()
-		n.viewport.Height = getViewportHeight() - 3
+		n.viewport.Width = layouts.GetContentInnerWidth()
+		n.viewport.Height = layouts.GetContentInnerHeight() - 3
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(m, newrepo_cancel_key):
@@ -107,10 +108,13 @@ func (n newrepo) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return n, n.updateInputs(msg)
 }
 
+func (n newrepo) GetHeaderString() string {
+	return "Create New Repository"
+}
 func (n newrepo) View() string {
 	var sb string
 
-	sb += fmt.Sprintf("%s\n%s\n%s", titleStyle.Render("New Repository "), n.viewport.View(), mainStyle.Render(n.input.View()))
+	sb += fmt.Sprintf("%s\n%s", n.viewport.View(), n.input.View())
 
 	return sb
 }

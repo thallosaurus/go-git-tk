@@ -23,9 +23,9 @@ var grantedCommands = CommandList{
 	"git-upload-pack",
 }
 
-func main() {
+func runCommand(cmd string) {
 	home := os.Getenv("PWD")
-	cmd := os.Getenv("SSH_ORIGINAL_COMMAND")
+	//cmd := os.Getenv("SSH_ORIGINAL_COMMAND")
 	s := strings.Split(cmd, " ")
 	switch {
 	case grantedCommands.contains(s[0]):
@@ -46,8 +46,16 @@ func main() {
 		} else {
 			os.Exit(0)
 		}
+
+	case cmd == "":
+		os.Exit(1)
+
 	default:
 		log.Println("Access denied")
 		os.Exit(1)
 	}
+}
+
+func main() {
+	runCommand(os.Getenv("SSH_ORIGINAL_COMMAND"))
 }

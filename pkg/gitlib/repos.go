@@ -42,7 +42,7 @@ func importExistingRepo(path string) (*Repo, error) {
 
 	repo := &Repo{
 		git:        r,
-		clonedRepo: fs,
+		ClonedRepo: fs,
 		Repopath:   path,
 	}
 
@@ -59,17 +59,17 @@ func createGitRepo(repoPath string) (*git.Repository, error) {
 
 type Repo struct {
 	git        *git.Repository
-	clonedRepo billy.Filesystem
+	ClonedRepo billy.Filesystem
 	Repopath   string
 }
 
 func (r Repo) GetReadme() (string, error) {
-	if _, err := r.clonedRepo.Stat("README.md"); err != nil {
+	if _, err := r.ClonedRepo.Stat("README.md"); err != nil {
 		// doesnt exist
 		return "", err
 	} else {
 
-		f, err := r.clonedRepo.Open("README.md")
+		f, err := r.ClonedRepo.Open("README.md")
 		if err != nil {
 			return "", err
 		}

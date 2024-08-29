@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"go-git-tk/pkg/layouts"
 	"io"
 	"strings"
 
@@ -29,10 +30,10 @@ func (d hookListDelegate) Render(w io.Writer, m list.Model, index int, listItem 
 
 	str := fmt.Sprintf("%d. %s", index+1, i.label)
 
-	fn := itemStyle.Render
+	fn := layouts.ItemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return selectedStyle.Render("> " + strings.Join(s, " "))
+			return layouts.SelectedStyle.Render("> " + strings.Join(s, " "))
 		}
 	}
 

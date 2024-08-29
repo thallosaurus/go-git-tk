@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"go-git-tk/pkg/gitlib"
+	"go-git-tk/pkg/layouts"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -25,9 +27,10 @@ var (
 )
 
 type reporename struct {
-	parent Richmodel
-	repo   gitlib.Repo
-	input  textinput.Model
+	parent   Richmodel
+	repo     gitlib.Repo
+	input    textinput.Model
+	viewport viewport.Model
 }
 
 type rename_event struct {
@@ -82,15 +85,20 @@ func (r reporename) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return r, nil
 }
 
+func (rr reporename) GetHeaderString() string {
+	return "Rename Repository"
+}
+
 func (rr reporename) View() string {
-	s := "Rename Repository\n\n"
+	/*s := "Rename Repository\n\n"
 
 	s += "Don't forget to update the Remote URL!\n\n"
 
 	s += "Name:\n"
-	s += rr.input.View()
+	s += rr.input.View()*/
 
-	return s
+	//return s
+	return fmt.Sprintf("%s\n%s", rr.viewport.View(), rr.input.View())
 }
 
 func (rr reporename) GetKeymapString() []key.Binding {
@@ -104,13 +112,17 @@ func OpenRepoRename(parent Richmodel, repo gitlib.Repo) reporename {
 	input := textinput.New()
 	input.Focus()
 
-	basename := path.Base(repo.Repopath)
+	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight()-3)
+	vp.SetContent("Enter the new name of the new Repository and press enter.\n\nDont forget to update the Remote URL!")
+	vp.Style = layouts.ContentStyle
 
+	basename := path.Base(repo.Repopath)
 	input.SetValue(strings.TrimSuffix(basename, filepath.Ext(basename)))
 
 	return reporename{
-		parent: parent,
-		repo:   repo,
-		input:  input,
+		parent:   parent,
+		repo:     repo,
+		input:    input,
+		viewport: vp,
 	}
 }

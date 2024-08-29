@@ -2,20 +2,19 @@ package views
 
 import (
 	"fmt"
+	"go-git-tk/pkg/config"
+	"go-git-tk/pkg/layouts"
 
 	"strings"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var conf = config.ReadConfig("./scripts/gittk-shell/config.json")
+
 var (
-	ssh_base_domain string = "localhost"
-	ssh_user        string = "git"
-
-	term_width  int = 20
-	term_height int = 14
-
 	cli_quit key.Binding = key.NewBinding(
 		key.WithKeys("ctrl+c"),
 		key.WithHelp("ctrl+c", "exit"),
@@ -25,17 +24,24 @@ var (
 type climodel struct {
 	selectedView Richmodel
 	show_keys    bool
+	rootPane     viewport.Model
 }
 
 type Richmodel interface {
 	tea.Model
 	GetKeymapString() []key.Binding
+	GetHeaderString() string
 }
 
 func NewCliModel() climodel {
+	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight())
+	vp.KeyMap.Down.SetEnabled(false)
+	vp.KeyMap.Up.SetEnabled(false)
+
 	return climodel{
 		selectedView: nil,
 		show_keys:    false,
+		rootPane:     vp,
 	}
 }
 
@@ -44,7 +50,6 @@ func (c *climodel) SetKeyMappingsShown(b bool) {
 }
 
 func (c climodel) Init() tea.Cmd {
-	//return nil
 	return ChangeView(MakeHomeList())
 }
 
@@ -69,15 +74,20 @@ func closeView() tea.Cmd {
 	}
 }
 
+func (c climodel) GetHeaderString() string {
+	return ""
+}
+
 func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
-		term_width = m.Width
-		term_height = m.Height
+		layouts.UpdateTermSize(m)
+		c.rootPane.Width = layouts.GetContentInnerWidth()
+		c.rootPane.Height = layouts.GetContentInnerHeight()
 
 	case switchView:
 		c.selectedView = m.model
-		return c, tea.Batch(c.selectedView.Init(), tea.ClearScreen)
+		return c, tea.Batch(c.selectedView.Init(), tea.WindowSize(), tea.ClearScreen)
 
 	case closeChild:
 		c.selectedView = nil
@@ -104,7 +114,11 @@ func (c climodel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (c climodel) View() string {
 	if c.selectedView != nil {
-		s := c.selectedView.View()
+		c.rootPane.SetContent(c.selectedView.View())
+
+		s := layouts.HeaderStyle.Render(c.selectedView.GetHeaderString()) + "\n"
+		//s += layouts.ContentStyle.Render(c.selectedView.View())
+		s += layouts.ContentStyle.Render(c.rootPane.View())
 		/*if c.show_keys {
 			s += "\n" + c.GetKeymapString()
 		}*/
@@ -113,13 +127,16 @@ func (c climodel) View() string {
 
 		var sb []string
 		for _, val := range km {
-			sb = append(sb, fmt.Sprintf("<%s>: %s", val.Help().Key, val.Help().Desc))
+
+			if val.Enabled() {
+				sb = append(sb, fmt.Sprintf("<%s>: %s", val.Help().Key, val.Help().Desc))
+			}
 		}
 
-		quickhelp := keymapStyle.Render(strings.Join(sb, " • "))
+		quickhelp := layouts.FooterStyle.Render(strings.Join(sb, " • "))
 		v := fmt.Sprintf("%s\n%s", s, quickhelp)
 
-		return v
+		return layouts.MainStyle.Render(v)
 	} else {
 		return fmt.Sprintf("root view, dbg: %v", c)
 	}

@@ -1,0 +1,5 @@
+{
+    "Ssh_base_domain": "localhost",
+    "Ssh_User": "git",
+    "Debug": true
+}

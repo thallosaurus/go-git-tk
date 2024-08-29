@@ -2,6 +2,7 @@ package views
 
 import (
 	"go-git-tk/pkg/gitlib"
+	"go-git-tk/pkg/layouts"
 
 	"log"
 	"os"
@@ -35,6 +36,10 @@ type home_list struct {
 	list list.Model
 }
 
+func (i home_list) GetHeaderString() string {
+	return "Git Server Toolkit"
+}
+
 func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case open_key_mgmt:
@@ -50,8 +55,10 @@ func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return i, tea.Batch(tea.ShowCursor, ChangeView(i))
 
 	case tea.WindowSizeMsg:
-		i.list.SetWidth(msg.Width)
-		i.list.SetHeight(getViewportHeight())
+		//i.list.SetWidth(msg.Width)
+		//i.list.SetHeight(getViewportHeight())
+		i.list.SetWidth(layouts.GetContentInnerWidth())
+		i.list.SetHeight(layouts.GetContentInnerHeight())
 		return i, nil
 
 	case tea.KeyMsg:
@@ -73,8 +80,8 @@ func (i home_list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, key_mgmt_key):
 			return i, openKeyMgmt()
 
-		case key.Matches(msg, import_repo):
-			return i, ChangeView(repo_import{})
+			/*case key.Matches(msg, import_repo):
+			return i, ChangeView(repo_import{})*/
 		}
 	}
 
@@ -91,12 +98,13 @@ func openKeyMgmt() tea.Cmd {
 }
 
 func (i home_list) View() string {
-	return titleStyle.Render("Git Server Toolkit") + "\n" + i.list.View()
+	return i.list.View()
 }
 
 func (i home_list) Init() tea.Cmd {
-	i.list.SetWidth(term_width)
-	i.list.SetHeight(getViewportHeight())
+	i.list.SetWidth(layouts.GetContentInnerWidth())
+	i.list.SetHeight(layouts.GetContentInnerHeight())
+
 	return tea.Batch(tea.ShowCursor, tea.WindowSize())
 }
 
@@ -130,14 +138,13 @@ func MakeHomeList() home_list {
 		items = append(items, homeListItem{repo})
 	}
 
-	list := list.New(items, homeListDelegate{}, term_width, term_height-1)
+	list := list.New(items, homeListDelegate{}, layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight())
 
 	list.SetShowStatusBar(false)
 	list.SetShowTitle(false)
 	//list.SetStatusBarItemName("repo", "repos")
 	list.SetShowHelp(false)
 	list.DisableQuitKeybindings()
-	list.Styles.Title = titleStyle
 
 	return home_list{
 		list: list,

@@ -3,6 +3,7 @@ package views
 import (
 	"fmt"
 	"go-git-tk/pkg/gitlib"
+	"go-git-tk/pkg/layouts"
 	"log"
 	"strings"
 
@@ -40,13 +41,18 @@ var (
 		key.WithKeys("r"),
 		key.WithHelp("r", "rename repo"),
 	)
+	repoview_browse key.Binding = key.NewBinding(
+		key.WithKeys("b"),
+		key.WithHelp("b", "browse repo"),
+		key.WithDisabled(),
+	)
 )
 
 func MakeRepoView(p Richmodel, repo gitlib.Repo) repoview {
 	//targets := make(map[string]func() tea.Cmd, 0)
-	vp := viewport.New(term_width, getViewportHeight())
+	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight())
 	vp.SetContent(getViewportContent(repo))
-	vp.Style = mainStyle
+	//vp.Style = layouts.MainStyle
 
 	return repoview{
 		repo:     repo,
@@ -55,17 +61,21 @@ func MakeRepoView(p Richmodel, repo gitlib.Repo) repoview {
 	}
 }
 
+func (r repoview) GetHeaderString() string {
+	return "Manage Repository"
+}
+
 func (r repoview) Init() tea.Cmd {
-	r.viewport.Width = getInnerViewportWidth()
-	r.viewport.Height = getViewportHeight()
+	r.viewport.Width = layouts.GetContentInnerWidth()
+	r.viewport.Height = layouts.GetContentInnerHeight()
 	return nil
 }
 
 func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
-		r.viewport.Width = getInnerViewportWidth()
-		r.viewport.Height = getViewportHeight()
+		r.viewport.Width = layouts.GetContentInnerWidth()
+		r.viewport.Height = layouts.GetContentInnerHeight()
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(m, repoview_cancel):
@@ -79,6 +89,9 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(m, repoview_rename):
 			return r, ChangeView(OpenRepoRename(r, r.repo))
+
+			/*case key.Matches(m, repoview_browse):
+			return r, ChangeView(MakeRepoBrowser(r, r.repo.ClonedRepo))*/
 		}
 
 	}
@@ -91,7 +104,7 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (r repoview) View() string {
 	//return ""
 
-	return fmt.Sprintf("%s\n%s", titleStyle.Render("Manage Repository"), r.viewport.View())
+	return r.viewport.View()
 }
 
 func (r repoview) GetKeymapString() []key.Binding {
@@ -111,7 +124,7 @@ func listToView(branches []string) string {
 			s += fmt.Sprintf("- %s\n", b)
 		}
 	} else {
-		s += emptyStyle.Render(" <empty>") + "\n"
+		s += layouts.EmptyStyle.Render(" <empty>") + "\n"
 	}
 
 	return s
@@ -119,8 +132,8 @@ func listToView(branches []string) string {
 
 func getViewportContent(repo gitlib.Repo) string {
 	var s string
-	s += fmt.Sprintf("%s %s\n", selectedStyle.Render("Name:"), repo.GetName())
-	s += fmt.Sprintf("%s %s@%s:%s\n", selectedStyle.Render("Repo URL:"), ssh_user, ssh_base_domain, repo.GetName())
+	s += fmt.Sprintf("%s %s\n", layouts.SelectedStyle.Render("Name:"), repo.GetName())
+	s += fmt.Sprintf("%s %s@%s:%s\n", layouts.SelectedStyle.Render("Repo URL:"), conf.Ssh_User, conf.Ssh_base_domain, repo.GetName())
 	s += "\n"
 
 	branches, err := repo.GetBranches()
@@ -128,11 +141,11 @@ func getViewportContent(repo gitlib.Repo) string {
 		log.Panic(err)
 	}
 
-	s += selectedStyle.Render("Branches:") + "\n"
+	s += layouts.SelectedStyle.Render("Branches:") + "\n"
 	s += listToView(branches)
 	s += "\n"
 
-	s += selectedStyle.Render("Tags:") + "\n"
+	s += layouts.SelectedStyle.Render("Tags:") + "\n"
 	tags, err := repo.GetTags()
 	if err != nil {
 		log.Panic(err)
@@ -147,16 +160,16 @@ func getViewportContent(repo gitlib.Repo) string {
 	s += "\n"
 
 	//s += "nl"
-	s += selectedStyle.Render("Committers:") + "\n"
+	s += layouts.SelectedStyle.Render("Committers:") + "\n"
 	s += listToView(c)
 	s += "\n"
 
-	s += selectedStyle.Render("Readme:") + "\n"
+	s += layouts.SelectedStyle.Render("Readme:") + "\n"
 
 	rr, err := repo.GetReadme()
 	if err != nil {
 		//log.Panic(err)
-		s += emptyStyle.Render("No readme published")
+		s += layouts.EmptyStyle.Render("No readme published")
 	} else {
 		s += rr + "\n\n"
 	}
