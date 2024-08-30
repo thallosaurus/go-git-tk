@@ -58,13 +58,14 @@ func TurnOffDebugBorders() {
 func SetAppColor(c string) {
 	//ColorTint = c
 	MainStyle = colorizeForegroundBorder(MainStyle, c)
-	HeaderStyle = colorizeForeground(HeaderStyle, c)
+	//HeaderStyle = colorizeForeground(HeaderStyle, c)
 	HeaderStyle = colorizeBackground(HeaderStyle, c)
 	HeaderStyle = colorizeForegroundBorder(HeaderStyle, c)
 	ContentStyle = colorizeForegroundBorder(ContentStyle, c)
 	FooterStyle = colorizeForegroundBorder(FooterStyle, c)
 	FooterStyle = colorizeForeground(FooterStyle, c)
 	SelectedStyle = colorizeForeground(SelectedStyle, c)
+	ListStyle = colorizeForeground(ListStyle, c)
 }
 
 func GetFooterWidth() int {
@@ -74,13 +75,16 @@ func GetFooterWidth() int {
 var (
 	term_width   = 0
 	term_height  = 0
-	MainStyle    = lipgloss.NewStyle().Padding(0)
+	MainStyle    = lipgloss.NewStyle()
 	HeaderStyle  = lipgloss.NewStyle().Bold(true).Padding(1)
 	ContentStyle = lipgloss.NewStyle().Padding(1)
 	FooterStyle  = lipgloss.NewStyle()
 
-	ItemStyle     = lipgloss.NewStyle().PaddingLeft(2)
-	SelectedStyle = lipgloss.NewStyle()
+	ItemStyle     = lipgloss.NewStyle().PaddingLeft(1)
+	SelectedStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder(), false, false, false, true).PaddingLeft(1)
+	SubItemStyle  = lipgloss.NewStyle().PaddingLeft(2)
+
+	ListStyle = lipgloss.NewStyle()
 
 	DangerousStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true)
 	EmptyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#808080"))

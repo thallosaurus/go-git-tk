@@ -24,6 +24,7 @@ var (
 	key_mgmt_key key.Binding = key.NewBinding(
 		key.WithKeys("k"),
 		key.WithHelp("k", "key management"),
+		key.WithDisabled(),
 	)
 	import_repo key.Binding = key.NewBinding(
 		key.WithKeys("i"),

@@ -28,6 +28,12 @@ func InitConfig(path ...string) {
 	}
 	Conf = ReadConfig(p)
 	layouts.SetAppColor(Conf.ColorTint)
+
+	if !Conf.ShowBorders {
+		layouts.MainStyle = layouts.MainStyle.Padding(1)
+	} else {
+		layouts.MainStyle = layouts.MainStyle.Padding(0)
+	}
 }
 
 func ReadConfig(path string) Config {

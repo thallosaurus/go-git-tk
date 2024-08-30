@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "cmd/shell/main.go",
-            "console": "integratedTerminal",
+            "console": "externalTerminal",
             "cwd": "${workspaceFolder}",
             "args": [
                 "-C",

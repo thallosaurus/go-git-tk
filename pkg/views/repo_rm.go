@@ -1,7 +1,6 @@
 package views
 
 import (
-	"fmt"
 	"go-git-tk/pkg/gitlib"
 	"go-git-tk/pkg/layouts"
 	"os"
@@ -48,13 +47,13 @@ func (r reporemove) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
 		r.viewport.Width = layouts.GetContentInnerWidth()
-		r.viewport.Height = layouts.GetContentInnerHeight()
+		r.viewport.Height = layouts.GetContentInnerHeight() - 3
 	case tea.KeyMsg:
-		switch m.String() {
-		case "esc":
+		switch {
+		case key.Matches(m, reporm_cancel):
 			return r, ChangeView(r.parent)
 
-		case "enter":
+		case key.Matches(m, reporm_accept):
 			if r.confirm.Value() == path.Base(r.repo.Repopath) {
 				return r, finalRemoveRepo(r.repo.Repopath)
 			}
@@ -90,8 +89,6 @@ func getRepoRmViewportContent() string {
 	sb.WriteString(layouts.DangerousStyle.Render("You will lose everything in this repository! No undo!"))
 	sb.WriteString("\n\n\n")
 	sb.WriteString("Type the name of the repository below and press enter.\n\n")
-
-	//sb.WriteString(r.confirm.View())
 	return sb.String()
 }
 
@@ -102,8 +99,10 @@ func (r reporemove) GetHeaderString() string {
 func (r reporemove) View() string {
 	var sb string
 
-	sb += fmt.Sprintf("%s\n%s", r.viewport.View(), r.confirm.View())
-
+	//sb += fmt.Sprintf("%s\n%s", r.viewport.View(), r.confirm.View())
+	sb += r.viewport.View()
+	sb += "\n"
+	sb += r.confirm.View()
 	return sb
 }
 
@@ -117,7 +116,7 @@ func (r reporemove) GetKeymapString() []key.Binding {
 func ConfirmRepoRemove(parent Richmodel, repo gitlib.Repo) reporemove {
 	vp := viewport.New(layouts.GetContentInnerWidth(), layouts.GetContentInnerHeight()-3)
 	vp.SetContent(getRepoRmViewportContent())
-	vp.Style = layouts.ContentStyle
+	//vp.Style = layouts.ContentStyle
 
 	t := textinput.New()
 	t.Focus()

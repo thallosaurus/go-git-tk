@@ -1,6 +1,7 @@
 package gitlib
 
 import (
+	"errors"
 	"fmt"
 	"go-git-tk/pkg/config"
 	"io"
@@ -131,6 +132,17 @@ func iterStringArray(iter storer.ReferenceIter) []string {
 	return s
 }
 
+func (r Repo) HasRemoteOrigin() (bool, error) {
+	remotes, err := r.git.Remotes()
+	return len(remotes) > 0, err
+}
+
+func (r Repo) PushToOrigin() error {
+	return r.git.Push(&git.PushOptions{
+		RemoteName: "origin",
+	})
+}
+
 func (r Repo) GetTags() ([]string, error) {
 	tags, err := r.git.Tags()
 	if err != nil {
@@ -189,7 +201,13 @@ func (r Repo) GetDescription() (string, error) {
 	f, err := os.ReadFile(r.Repopath + "/description")
 
 	if err != nil {
-		return "", err
+		switch {
+		case errors.Is(err, os.ErrNotExist):
+			return "No description", nil
+
+		default:
+			return "", err
+		}
 	}
 
 	return string(f), nil
