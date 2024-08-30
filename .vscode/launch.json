@@ -11,7 +11,11 @@
             "mode": "auto",
             "program": "cmd/shell/main.go",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "-C",
+                "./scripts/gittk/shell.json"
+            ]
         }
     ]
 }

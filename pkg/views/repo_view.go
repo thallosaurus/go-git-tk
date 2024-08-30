@@ -73,6 +73,9 @@ func (r repoview) GetHeaderString() string {
 func (r repoview) Init() tea.Cmd {
 	r.viewport.Width = layouts.GetContentInnerWidth()
 	r.viewport.Height = layouts.GetContentInnerHeight()
+	/*if r.repo.IsRepoEmpty() {
+		repoview_clone.SetEnabled(false)
+	}*/
 	return nil
 }
 
@@ -97,8 +100,6 @@ func (r repoview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(m, repoview_clone):
 			return r, ChangeView(OpenRepoClone(r, r.repo))
-			/*case key.Matches(m, repoview_browse):
-			return r, ChangeView(MakeRepoBrowser(r, r.repo.ClonedRepo))*/
 		}
 
 	}

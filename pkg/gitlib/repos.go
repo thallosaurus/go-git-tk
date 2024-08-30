@@ -77,6 +77,14 @@ type Repo struct {
 	Repopath   string
 }
 
+func (r Repo) IsRepoEmpty() bool {
+	c, err := r.GetCommitters()
+	if err != nil {
+		panic(err)
+	}
+	return len(c) == 0
+}
+
 func (r Repo) CloneToWorkdir() (*git.Repository, error) {
 	return git.PlainClone(config.Conf.RepoWorkdir+"/"+r.GetName(), false, &git.CloneOptions{
 		URL: r.Repopath,

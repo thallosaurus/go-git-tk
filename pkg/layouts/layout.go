@@ -1,8 +1,6 @@
 package layouts
 
 import (
-	"go-git-tk/pkg/config"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -32,6 +30,17 @@ func borderize(s lipgloss.Style, v bool) lipgloss.Style {
 	return s.Border(lipgloss.NormalBorder(), v)
 }
 
+func colorizeForegroundBorder(s lipgloss.Style, c string) lipgloss.Style {
+	return s.BorderForeground(lipgloss.Color(c))
+}
+
+func colorizeForeground(s lipgloss.Style, c string) lipgloss.Style {
+	return s.Foreground(lipgloss.Color(c))
+}
+func colorizeBackground(s lipgloss.Style, c string) lipgloss.Style {
+	return s.Background(lipgloss.Color(c))
+}
+
 func TurnOnDebugBorders() {
 	MainStyle = borderize(MainStyle, true)
 	HeaderStyle = borderize(HeaderStyle, true)
@@ -46,6 +55,18 @@ func TurnOffDebugBorders() {
 	FooterStyle = borderize(FooterStyle, false)
 }
 
+func SetAppColor(c string) {
+	//ColorTint = c
+	MainStyle = colorizeForegroundBorder(MainStyle, c)
+	HeaderStyle = colorizeForeground(HeaderStyle, c)
+	HeaderStyle = colorizeBackground(HeaderStyle, c)
+	HeaderStyle = colorizeForegroundBorder(HeaderStyle, c)
+	ContentStyle = colorizeForegroundBorder(ContentStyle, c)
+	FooterStyle = colorizeForegroundBorder(FooterStyle, c)
+	FooterStyle = colorizeForeground(FooterStyle, c)
+	SelectedStyle = colorizeForeground(SelectedStyle, c)
+}
+
 func GetFooterWidth() int {
 	return GetContentInnerWidth() + MainStyle.GetHorizontalFrameSize()
 }
@@ -53,14 +74,15 @@ func GetFooterWidth() int {
 var (
 	term_width   = 0
 	term_height  = 0
-	MainStyle    = lipgloss.NewStyle().Padding(0).BorderForeground(lipgloss.Color(config.Conf.ColorTint))
-	HeaderStyle  = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#ffffff")).Background(lipgloss.Color(config.Conf.ColorTint)).Padding(1).BorderForeground(lipgloss.Color(config.Conf.ColorTint))
-	ContentStyle = lipgloss.NewStyle().Padding(1).BorderForeground(lipgloss.Color(config.Conf.ColorTint))
-	FooterStyle  = lipgloss.NewStyle().BorderForeground(lipgloss.Color(config.Conf.ColorTint)).Foreground(EmptyStyle.GetForeground())
+	MainStyle    = lipgloss.NewStyle().Padding(0)
+	HeaderStyle  = lipgloss.NewStyle().Bold(true).Padding(1)
+	ContentStyle = lipgloss.NewStyle().Padding(1)
+	FooterStyle  = lipgloss.NewStyle()
 
 	ItemStyle     = lipgloss.NewStyle().PaddingLeft(2)
-	SelectedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(config.Conf.ColorTint))
+	SelectedStyle = lipgloss.NewStyle()
 
 	DangerousStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000")).Bold(true)
 	EmptyStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#808080"))
+	//ColorTint      = "#ffffff"
 )
